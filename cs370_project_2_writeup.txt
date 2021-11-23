@@ -1,0 +1,45 @@
+1. I chose to use a non-cryptographic hash.  I used xxhash (this can be found at
+https://pypi.org/project/xxhash/), as it promised to be a fast hashing algorithm
+that was easy to use and seedable.  The hash algorithm being seedable, I could
+re-use xxhash with different seeds to create the results for my bloom filter.  I
+chose this over other hash algorithms (both cryptographic and non-cryptographic)
+for it's speed as the dictionary file had over 600,000 entries.  It seems that
+xxhash runs well on the filp server, I was able to have my program run in a
+reasonable time (usually under 15 seconds).  The hash function was also very
+friendly for producing direct integer output, and I didn't have to do processing
+of the digest to get an integer.  Xxhash has a 32 and 64 bit output. I choose to
+use the 32 bit version as it seemed to be sufficient for this assignment. I used
+a bloom filter that was 2^23 bits.  This seemed to be the sweet spot for seeing
+a difference between 3 and 5 hashes with the sample input.  Any larger or
+smaller and the output seemed to be the same.
+
+2. Here is some sample output form my program:
+
+Time to insert passwords from dictionary.txt using 3 hashs: 4.673761s
+Time to insert passwords from dictionary.txt using 5 hashs: 6.657858s
+Time to check 17 passwords with 5 hashes: 0.006830s
+Time to check 17 passwords with 3 hashes: 0.004523s
+Time to check 17 passwords with 5 hashes: 0.004150s
+
+First the program reports how long it takes to insert passwords into a bloom
+filter using either 3 or 5 hashes.  It takes about 2 seconds longer to insert
+using 5 hashes.  Second the program reports how long it takes to check all of
+the passwords using 3 or 5 hashes.  It takes slightly longer for the program to
+check 5 hashes.  I added an extra line to recalculate 5 hashes again, and it
+takes less time than calculating 3 hashes.  This is bizarre, however I believe
+it might be due to some caching happening either at the python, OS, or hardware
+level.  Either way, it will take longer to do the operations with more hashes
+as it is something that needs to be computed for every password.
+
+3. Using the equation (1 - (1 - (1/N)^kB))^k from the slides,
+For 3 hashes: p ~= 0.007
+For 5 hashes: p ~= 0.002
+
+There is no chance of a false negative with a bloom filter.
+
+4.  We can reduce the rate of false positives by increasing the
+size of the bloom filter.  Currently there can be up to 2^32 entries as the
+width of xxhash's output is 2^32.  We have to take some consideration however
+when increasing the size.  2^32 bits is 536,870,912 bytes which while it would
+reduce the rate of a false positive, it would defeat the purpose of the bloom
+filter's space-efficient property.
